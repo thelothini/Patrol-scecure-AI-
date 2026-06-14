@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PatrolSecure - Campus Discipline Management Web Application.">
+  <title>PatrolSecure - Campus Discipline Management</title>
+  
+  <!-- Material Icons (Google Fonts) -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- App Root View Wrapper -->
+  <div id="app-root">
+    
+    <!-- Offline Simulator Banner -->
+    <div id="offline-banner" class="offline-banner" style="display: none;">
+      <span class="material-icons-outlined">wifi_off</span>
+      <span>API server is offline. Running in <strong>Local Demo / Simulation Mode</strong>.</span>
+      <button onclick="app.toggleSimulatorMode()">Force Online</button>
+    </div>
+
+    <!-- 1. SPLASH VIEW -->
+    <div id="splash-view" class="view-container active">
+      <div class="splash-logo-container">
+        <div class="splash-logo-glow"></div>
+        <span class="material-icons splash-icon">shield</span>
+      </div>
+      <h1 class="splash-title">PatrolSecure</h1>
+      <p class="splash-subtitle">Campus Discipline Management</p>
+      <div class="splash-loader"></div>
+    </div>
+
+    <!-- 2. LOGIN VIEW -->
+    <div id="login-view" class="view-container">
+      <div class="auth-wrapper">
+        <div class="auth-header">
+          <div class="auth-header-icon">
+            <span class="material-icons">shield</span>
+          </div>
+          <div class="auth-header-text">
+            <h1>PatrolSecure</h1>
+            <p>TEACHER PORTAL</p>
+          </div>
+        </div>
+        
+        <div class="auth-welcome">
+          <h2>Welcome<br>Back</h2>
+          <p>Sign in to continue patrol operations</p>
+        </div>
+
+        <!-- GPS Chip indicator -->
+        <div id="login-gps-chip" class="gps-chip loading">
+          <div class="gps-dot loading"></div>
+          <span id="login-gps-text">Fetching location...</span>
+        </div>
+
+        <form id="login-form" onsubmit="app.handleLogin(event)">
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <div class="input-wrapper">
+              <span class="material-icons input-icon">alternate_email</span>
+              <input type="email" id="login-email" class="form-control" placeholder="teacher@college.edu" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <div class="input-wrapper">
+              <span class="material-icons input-icon">lock_outline</span>
+              <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
+              <button type="button" class="suffix-btn" onclick="app.togglePasswordVisibility('login-password', this)">
+                <span class="material-icons-outlined">visibility_off</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Device Name</label>
+            <div class="input-wrapper">
+              <span class="material-icons input-icon">smartphone</span>
+              <input type="text" id="login-device" class="form-control" placeholder="Auto-detected device" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-grad" id="login-submit-btn">
+            <span>SIGN IN</span>
+            <span class="material-icons">login</span>
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          <p>Don't have an account? <a href="#" onclick="app.navigateTo('signup-view')">Register Now</a></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. SIGNUP VIEW -->
+    <div id="signup-view" class="view-container">
+      <div class="auth-wrapper" style="max-width: 500px;">
+        <div class="auth-header">
+          <div class="auth-header-icon">
+            <span class="material-icons">shield</span>
+          </div>
+          <div class="auth-header-text">
+            <h1>PatrolSecure</h1>
+            <p>REGISTRATION</p>
+          </div>
+        </div>
+
+        <div class="auth-welcome">
+          <h2>Create<br>Account</h2>
+          <p>Register as patrol personnel</p>
+        </div>
+
+        <div id="signup-gps-chip" class="gps-chip loading">
+          <div class="gps-dot loading"></div>
+          <span id="signup-gps-text">Fetching location...</span>
+        </div>
+
+        <form id="signup-form" onsubmit="app.handleSignup(event)">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <div class="input-wrapper">
+              <span class="material-icons-outlined input-icon">person</span>
+              <input type="text" id="signup-name" class="form-control" placeholder="Dr. Jane Doe" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Teacher ID</label>
+            <div class="input-wrapper">
+              <span class="material-icons-outlined input-icon">badge</span>
+              <input type="text" id="signup-teacherid" class="form-control" placeholder="T1001" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <div class="input-wrapper">
+              <span class="material-icons-outlined input-icon">alternate_email</span>
+              <input type="email" id="signup-email" class="form-control" placeholder="teacher@college.edu" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <div class="input-wrapper">
+              <span class="material-icons-outlined input-icon">phone</span>
+              <input type="tel" id="signup-phone" class="form-control" placeholder="9876543210" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <div class="input-wrapper">
+              <span class="material-icons-outlined input-icon">school</span>
+              <select id="signup-department" class="form-control form-control-select" required>
+                <option value="" disabled selected>Select Department</option>
+                <option value="CSE">CSE</option>
+                <option value="ECE">ECE</option>
+                <option value="EEE">EEE</option>
+                <option value="MECH">MECH</option>
+                <option value="CIVIL">CIVIL</option>
+                <option value="IT">IT</option>
+                <option value="AIDS">AIDS</option>
+                <option value="AIML">AIML</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <div class="input-wrapper">
+              <span class="material-icons-outlined input-icon">lock</span>
+              <input type="password" id="signup-password" class="form-control" placeholder="••••••••" required>
+              <button type="button" class="suffix-btn" onclick="app.togglePasswordVisibility('signup-password', this)">
+                <span class="material-icons-outlined">visibility_off</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Device Name</label>
+            <div class="input-wrapper">
+              <span class="material-icons-outlined input-icon">smartphone</span>
+              <input type="text" id="signup-device" class="form-control" placeholder="Auto-detected device" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-grad" id="signup-submit-btn">
+            <span>REGISTER NOW</span>
+            <span class="material-icons-outlined">how_to_reg</span>
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          <p>Already have an account? <a href="#" onclick="app.navigateTo('login-view')">Sign In</a></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. CORE APP SHELL -->
+    <div id="app-shell" class="app-shell">
+      
+      <!-- DESKTOP SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <div class="sidebar-logo">
+            <span class="material-icons">shield</span>
+          </div>
+          <div class="sidebar-brand-name">
+            <h2>PatrolSecure</h2>
+            <p id="sidebar-role-badge">PORTAL</p>
+          </div>
+        </div>
+
+        <ul class="sidebar-menu">
+          <li>
+            <a class="sidebar-link active" data-target="home-panel" onclick="app.switchPanel('home-panel', this)">
+              <span class="material-icons-outlined">dashboard</span>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li class="teacher-only">
+            <a class="sidebar-link" data-target="add-report-panel" onclick="app.switchPanel('add-report-panel', this)">
+              <span class="material-icons-outlined">add_circle_outline</span>
+              <span>Add Report</span>
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" data-target="reports-panel" onclick="app.switchPanel('reports-panel', this)">
+              <span class="material-icons-outlined">assignment</span>
+              <span>Patrol Reports</span>
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" data-target="search-student-panel" onclick="app.switchPanel('search-student-panel', this)">
+              <span class="material-icons-outlined">search</span>
+              <span>Student Search</span>
+            </a>
+          </li>
+          <!-- Admin items integrated -->
+          <li class="admin-only">
+            <a class="sidebar-link" data-target="access-requests-panel" onclick="app.switchPanel('access-requests-panel', this)">
+              <span class="material-icons-outlined">person_add</span>
+              <span>Access Requests</span>
+              <div id="sidebar-badge-requests" class="badge-indicator" style="display: none; margin-left: auto;">0</div>
+            </a>
+          </li>
+          <li class="admin-only">
+            <a class="sidebar-link" data-target="login-history-panel" onclick="app.switchPanel('login-history-panel', this)">
+              <span class="material-icons-outlined">history_toggle_off</span>
+              <span>Login History</span>
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" data-target="notifications-panel" onclick="app.switchPanel('notifications-panel', this)">
+              <span class="material-icons-outlined">notifications</span>
+              <span>Notifications</span>
+              <div id="sidebar-badge-notifs" class="badge-indicator" style="display: none; margin-left: auto;">0</div>
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" data-target="profile-panel" onclick="app.switchPanel('profile-panel', this)">
+              <span class="material-icons-outlined">account_circle</span>
+              <span>My Profile</span>
+            </a>
+          </li>
+        </ul>
+
+        <div class="sidebar-profile">
+          <div class="sidebar-avatar" id="sidebar-avatar-char">T</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name">Dr. Priya Sharma</div>
+            <div class="sidebar-user-role" id="sidebar-user-id">CSE • Teacher</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CONTENT SHELL CONTAINER -->
+      <main class="shell-content">
+        
+        <!-- MOBILE HEADER -->
+        <header class="app-bar">
+          <div class="app-bar-left">
+            <button id="mobile-back-btn" class="back-btn" style="display: none;" onclick="app.handleMobileBack()">
+              <span class="material-icons-outlined">arrow_back_ios_new</span>
+            </button>
+            <span class="app-bar-title" id="mobile-page-title">Dashboard</span>
+          </div>
+          <div class="app-bar-actions">
+            <button class="back-btn" onclick="app.openMobileNotifications()">
+              <span class="material-icons-outlined">notifications</span>
+              <span id="mobile-badge-notifs" class="badge-indicator" style="display: none; position: absolute; top: 12px; right: 12px;">0</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- PANEL 1: DASHBOARD HOME -->
+        <div id="home-panel" class="view-container active">
+          <div class="home-welcome-hero">
+            <h1 id="welcome-name">Hello, Dr. Priya Sharma</h1>
+            <span class="welcome-role-badge" id="welcome-role">TEACHER PORTAL</span>
+          </div>
+
+          <!-- Quick Stats Row -->
+          <div class="grid-stats">
+            <div class="stat-box accent">
+              <span class="material-icons-outlined icon">assignment</span>
+              <div class="stat-value" id="stats-total-reports">0</div>
+              <div class="stat-label" id="stats-total-label">Total Reports</div>
+            </div>
+            
+            <div class="stat-box warning">
+              <span class="material-icons-outlined icon">error_outline</span>
+              <div class="stat-value" id="stats-open-reports">0</div>
+              <div class="stat-label">Open Issues</div>
+            </div>
+            
+            <div class="stat-box success">
+              <span class="material-icons-outlined icon">check_circle_outline</span>
+              <div class="stat-value" id="stats-resolved-reports">0</div>
+              <div class="stat-label">Resolved</div>
+            </div>
+            
+            <div class="stat-box error interactive" id="stats-fourth-box" onclick="app.triggerFourthBoxAction()">
+              <span class="material-icons-outlined icon" id="stats-fourth-icon">gpp_bad</span>
+              <div class="stat-value" id="stats-fourth-value">0</div>
+              <div class="stat-label" id="stats-fourth-label">Failed Logins</div>
+            </div>
+          </div>
+
+          <!-- Quick Action Cards (Teacher Only) -->
+          <div class="teacher-only">
+            <div class="sec-header">
+              <div class="sec-header-title">
+                <div class="sec-header-bar"></div>
+                <div class="sec-header-text">QUICK ACTIONS</div>
+              </div>
+            </div>
+            <div class="home-quick-actions">
+              <div class="action-card" onclick="app.switchPanel('add-report-panel')">
+                <span class="material-icons icon">add_circle_outline</span>
+                <h3>Add Report</h3>
+              </div>
+              <div class="action-card" onclick="app.switchPanel('reports-panel')">
+                <span class="material-icons icon">assignment</span>
+                <h3>View Reports</h3>
+              </div>
+              <div class="action-card" onclick="app.switchPanel('search-student-panel')">
+                <span class="material-icons icon">search</span>
+                <h3>Search Student</h3>
+              </div>
+              <div class="action-card" onclick="app.switchPanel('profile-panel')">
+                <span class="material-icons icon">account_circle</span>
+                <h3>My Profile</h3>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="sec-header">
+            <div class="sec-header-title">
+              <div class="sec-header-bar"></div>
+              <div class="sec-header-text">RECENT ACTIVITY</div>
+            </div>
+            <a class="sec-header-action" onclick="app.switchPanel('reports-panel')">View All</a>
+          </div>
+          
+          <div id="home-recent-list">
+            <!-- Dynamic reports populated here -->
+            <div class="k-card" style="text-align: center; color: var(--text-mut);">
+              Loading recent activity...
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 2: ADD PATROL REPORT -->
+        <div id="add-report-panel" class="view-container">
+          <form id="report-form" onsubmit="app.handleReportSubmit(event)">
+            
+            <div class="sec-header">
+              <div class="sec-header-title">
+                <div class="sec-header-bar"></div>
+                <div class="sec-header-text">SELECT ISSUE TYPE</div>
+              </div>
+            </div>
+
+            <!-- Issue Selector Grid -->
+            <div class="issue-grid" id="issue-selector-grid">
+              <div class="issue-option" data-type="ID Card Missing" onclick="app.selectIssueType('ID Card Missing', this)">
+                <span class="material-icons-outlined icon">badge</span>
+                <span class="issue-option-label">ID Card Missing</span>
+              </div>
+              <div class="issue-option" data-type="Uniform Issue" onclick="app.selectIssueType('Uniform Issue', this)">
+                <span class="material-icons-outlined icon">checkroom</span>
+                <span class="issue-option-label">Uniform Issue</span>
+              </div>
+              <div class="issue-option" data-type="Late Coming" onclick="app.selectIssueType('Late Coming', this)">
+                <span class="material-icons-outlined icon">access_time</span>
+                <span class="issue-option-label">Late Coming</span>
+              </div>
+              <div class="issue-option" data-type="Mobile Usage" onclick="app.selectIssueType('Mobile Usage', this)">
+                <span class="material-icons-outlined icon">smartphone</span>
+                <span class="issue-option-label">Mobile Usage</span>
+              </div>
+              <div class="issue-option" data-type="Misconduct" onclick="app.selectIssueType('Misconduct', this)">
+                <span class="material-icons-outlined icon">warning_amber</span>
+                <span class="issue-option-label">Misconduct</span>
+              </div>
+              <div class="issue-option" data-type="Restricted Area" onclick="app.selectIssueType('Restricted Area', this)">
+                <span class="material-icons-outlined icon">location_off</span>
+                <span class="issue-option-label">Restricted Area</span>
+              </div>
+              <div class="issue-option" data-type="Other" onclick="app.selectIssueType('Other', this)">
+                <span class="material-icons-outlined icon">more_horiz</span>
+                <span class="issue-option-label">Other</span>
+              </div>
+            </div>
+
+            <div class="sec-header">
+              <div class="sec-header-title">
+                <div class="sec-header-bar"></div>
+                <div class="sec-header-text">STUDENT INFORMATION</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Student Name</label>
+              <div class="input-wrapper">
+                <span class="material-icons-outlined input-icon">person</span>
+                <input type="text" id="report-student-name" class="form-control" placeholder="Arjun Kumar" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Register Number</label>
+              <div class="input-wrapper">
+                <span class="material-icons-outlined input-icon">numbers</span>
+                <input type="text" id="report-student-reg" class="form-control" placeholder="22CS001" style="text-transform: uppercase;" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Department</label>
+              <div class="input-wrapper">
+                <span class="material-icons-outlined input-icon">school</span>
+                <select id="report-student-dept" class="form-control form-control-select" required>
+                  <option value="" disabled selected>Select Department</option>
+                  <option value="CSE">CSE</option>
+                  <option value="ECE">ECE</option>
+                  <option value="EEE">EEE</option>
+                  <option value="MECH">MECH</option>
+                  <option value="CIVIL">CIVIL</option>
+                  <option value="IT">IT</option>
+                  <option value="AIDS">AIDS</option>
+                  <option value="AIML">AIML</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Year / Section</label>
+              <div class="input-wrapper">
+                <span class="material-icons-outlined input-icon">class</span>
+                <select id="report-student-year" class="form-control form-control-select" required>
+                  <option value="" disabled selected>Select Year/Section</option>
+                  <option value="I - A">I - A</option>
+                  <option value="I - B">I - B</option>
+                  <option value="II - A">II - A</option>
+                  <option value="II - B">II - B</option>
+                  <option value="III - A">III - A</option>
+                  <option value="III - B">III - B</option>
+                  <option value="IV - A">IV - A</option>
+                  <option value="IV - B">IV - B</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="sec-header">
+              <div class="sec-header-title">
+                <div class="sec-header-bar"></div>
+                <div class="sec-header-text">INCIDENT DETAILS</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Location</label>
+              <div class="input-wrapper">
+                <span class="material-icons-outlined input-icon">location_on</span>
+                <input type="text" id="report-location" class="form-control" placeholder="Block A - Corridor" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Date & Time</label>
+              <div class="input-wrapper">
+                <span class="material-icons-outlined input-icon">calendar_today</span>
+                <input type="datetime-local" id="report-datetime" class="form-control" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Remarks</label>
+              <div class="input-wrapper">
+                <span class="material-icons-outlined input-icon">notes</span>
+                <textarea id="report-remarks" class="form-control" rows="4" placeholder="Describe the incident in detail..." style="resize: vertical; font-family: inherit; height: auto;" required></textarea>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-grad" id="report-submit-btn" style="margin-top: 16px;">
+              <span>SUBMIT REPORT</span>
+              <span class="material-icons-outlined">send</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- PANEL 3: PATROL REPORTS LIST -->
+        <div id="reports-panel" class="view-container">
+          <!-- Search Field -->
+          <div class="form-group">
+            <div class="input-wrapper">
+              <span class="material-icons-outlined input-icon">search</span>
+              <input type="text" id="reports-search-input" class="form-control" placeholder="Search by Student Name or Reg Number..." oninput="app.filterReports()">
+            </div>
+          </div>
+
+          <!-- Tabs (ALL, OPEN, RESOLVED) -->
+          <div class="tab-bar">
+            <button class="tab-btn active" id="reports-tab-all" onclick="app.setReportsTabFilter('all')">ALL</button>
+            <button class="tab-btn" id="reports-tab-open" onclick="app.setReportsTabFilter('open')">OPEN</button>
+            <button class="tab-btn" id="reports-tab-resolved" onclick="app.setReportsTabFilter('resolved')">RESOLVED</button>
+          </div>
+
+          <!-- Reports List Container -->
+          <div id="reports-list-container">
+            <!-- Populate dynamic card list -->
+          </div>
+        </div>
+
+        <!-- PANEL 4: REPORT DETAILS -->
+        <div id="report-details-panel" class="view-container">
+          <!-- Back button managed inline -->
+          <div id="detail-header-card" class="detail-header-card">
+            <span class="material-icons icon">report_problem</span>
+            <div>
+              <div class="detail-header-title" id="detail-issue-type">Late Coming</div>
+              <div class="detail-header-subtitle" id="detail-datetime">Reported on 11/06/2026 08:30</div>
+            </div>
+            <!-- Status Badge -->
+            <span class="badge warning" id="detail-status-badge" style="margin-left: auto;">Open</span>
+          </div>
+
+          <div class="k-card">
+            <div class="sec-header" style="margin-top:0;">
+              <div class="sec-header-title">
+                <div class="sec-header-bar"></div>
+                <div class="sec-header-text">STUDENT DETAILS</div>
+              </div>
+            </div>
+            <div class="info-row">
+              <span class="material-icons-outlined icon">person</span>
+              <span class="info-row-label">Name</span>
+              <span class="info-row-value" id="detail-student-name">Arjun Kumar</span>
+            </div>
+            <div class="info-row">
+              <span class="material-icons-outlined icon">numbers</span>
+              <span class="info-row-label">Register No.</span>
+              <span class="info-row-value" id="detail-student-reg">22CS001</span>
+            </div>
+            <div class="info-row">
+              <span class="material-icons-outlined icon">school</span>
+              <span class="info-row-label">Department</span>
+              <span class="info-row-value" id="detail-student-dept">CSE</span>
+            </div>
+            <div class="info-row">
+              <span class="material-icons-outlined icon">class</span>
+              <span class="info-row-label">Year / Section</span>
+              <span class="info-row-value" id="detail-student-year">III - A</span>
+            </div>
+          </div>
+
+          <div class="k-card">
+            <div class="sec-header" style="margin-top:0;">
+              <div class="sec-header-title">
+                <div class="sec-header-bar"></div>
+                <div class="sec-header-text">INCIDENT DETAILS</div>
+              </div>
+            </div>
+            <div class="info-row">
+              <span class="material-icons-outlined icon">location_on</span>
+              <span class="info-row-label">Location</span>
+              <span class="info-row-value" id="detail-location">Block A - Corridor</span>
+            </div>
+            <div class="info-row">
+              <span class="material-icons-outlined icon">access_time</span>
+              <span class="info-row-label">Date & Time</span>
+              <span class="info-row-value" id="detail-date-time">11/06/2026 08:30</span>
+            </div>
+            <div class="info-row">
+              <span class="material-icons-outlined icon">person_pin</span>
+              <span class="info-row-label">Reported By</span>
+              <span class="info-row-value" id="detail-reported-by">Dr. Priya Sharma</span>
+            </div>
+
+            <div class="remarks-box">
+              <div class="remarks-title">Remarks</div>
+              <p class="remarks-content" id="detail-remarks">Arrived 15 minutes late without a valid gate pass. Repeating offence.</p>
+            </div>
+          </div>
+
+          <div class="sec-header">
+            <div class="sec-header-title">
+              <div class="sec-header-bar"></div>
+              <div class="sec-header-text">UPDATE STATUS</div>
+            </div>
+          </div>
+
+          <div class="status-btn-group" id="status-update-buttons">
+            <button class="status-toggle-btn" data-status="Open" onclick="app.updateReportStatus('Open')">Open</button>
+            <button class="status-toggle-btn" data-status="Resolved" onclick="app.updateReportStatus('Resolved')">Resolved</button>
+            <button class="status-toggle-btn" data-status="Pending" onclick="app.updateReportStatus('Pending')">Pending</button>
+          </div>
+        </div>
+
+        <!-- PANEL 5: STUDENT SEARCH -->
+        <div id="search-student-panel" class="view-container">
+          <form id="search-student-form" onsubmit="app.handleStudentSearch(event)">
+            <div class="form-group">
+              <label class="form-label">Search Register Number</label>
+              <div class="input-wrapper">
+                <span class="material-icons-outlined input-icon">numbers</span>
+                <input type="text" id="search-student-reg" class="form-control" placeholder="Enter Reg No (e.g. 22CS001)" style="text-transform: uppercase;" required>
+              </div>
+            </div>
+            <button type="submit" class="btn-grad" id="search-student-submit-btn">
+              <span>GET STUDENT HISTORY</span>
+              <span class="material-icons-outlined">search</span>
+            </button>
+          </form>
+
+          <div id="student-history-results" style="display: none; margin-top: 24px;">
+            <div class="k-card">
+              <div class="sec-header" style="margin-top:0;">
+                <div class="sec-header-title">
+                  <div class="sec-header-bar"></div>
+                  <div class="sec-header-text">STUDENT PROFILE</div>
+                </div>
+              </div>
+              <div class="info-row">
+                <span class="material-icons-outlined icon">person</span>
+                <span class="info-row-label">Name</span>
+                <span class="info-row-value" id="history-student-name">-</span>
+              </div>
+              <div class="info-row">
+                <span class="material-icons-outlined icon">school</span>
+                <span class="info-row-label">Department</span>
+                <span class="info-row-value" id="history-student-dept">-</span>
+              </div>
+              <div class="info-row">
+                <span class="material-icons-outlined icon">class</span>
+                <span class="info-row-label">Year / Section</span>
+                <span class="info-row-value" id="history-student-year">-</span>
+              </div>
+              <div class="info-row">
+                <span class="material-icons-outlined icon">report_problem</span>
+                <span class="info-row-label">Violations Count</span>
+                <span class="info-row-value" id="history-student-count">0</span>
+              </div>
+            </div>
+
+            <div class="sec-header">
+              <div class="sec-header-title">
+                <div class="sec-header-bar"></div>
+                <div class="sec-header-text">DISCIPLINARY RECORD</div>
+              </div>
+            </div>
+
+            <div id="student-history-list">
+              <!-- Violations lists -->
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 6: ADMIN ACCESS REQUESTS -->
+        <div id="access-requests-panel" class="view-container">
+          <div class="sec-header">
+            <div class="sec-header-title">
+              <div class="sec-header-bar"></div>
+              <div class="sec-header-text">DEVICE ACCESS REGISTRATIONS</div>
+            </div>
+          </div>
+          
+          <div id="admin-requests-list">
+            <!-- Dynamic request approvals populated here -->
+          </div>
+        </div>
+
+        <!-- PANEL 7: LOGIN HISTORY LOGS -->
+        <div id="login-history-panel" class="view-container">
+          <div class="sec-header">
+            <div class="sec-header-title">
+              <div class="sec-header-bar"></div>
+              <div class="sec-header-text">SYSTEM LOGIN ACTIVITIES</div>
+            </div>
+          </div>
+          
+          <div id="admin-history-list">
+            <!-- Dynamic history log list populated here -->
+          </div>
+        </div>
+
+        <!-- PANEL 8: NOTIFICATIONS -->
+        <div id="notifications-panel" class="view-container">
+          <div class="sec-header" style="margin-top:0;">
+            <div class="sec-header-title">
+              <div class="sec-header-bar"></div>
+              <div class="sec-header-text">USER NOTIFICATIONS</div>
+            </div>
+            <a class="sec-header-action" onclick="app.markAllNotificationsRead()">Mark all read</a>
+          </div>
+
+          <div id="notifications-list-container">
+            <!-- Population dynamic notifications -->
+          </div>
+        </div>
+
+        <!-- PANEL 9: MY PROFILE -->
+        <div id="profile-panel" class="view-container">
+          <div class="profile-hero">
+            <div class="profile-avatar-stack">
+              <div class="profile-avatar" id="profile-avatar-char">T</div>
+              <div class="profile-avatar-badge">
+                <span class="material-icons">check</span>
+              </div>
+            </div>
+            <div class="profile-name" id="profile-details-name">Dr. Priya Sharma</div>
+            <div class="profile-id" id="profile-details-id">T1001</div>
+            <span class="profile-role-tag" id="profile-details-role">Teacher</span>
+
+            <div class="profile-stat-row">
+              <div class="profile-stat-chip">
+                <div class="profile-stat-chip-val" id="profile-stat-reports" style="color: var(--accent);">0</div>
+                <div class="profile-stat-chip-label">My Reports</div>
+              </div>
+              <div class="profile-stat-chip">
+                <div class="profile-stat-chip-val" id="profile-stat-role" style="color: var(--gold); text-transform: uppercase;">TEACHER</div>
+                <div class="profile-stat-chip-label">System Role</div>
+              </div>
+              <div class="profile-stat-chip">
+                <div class="profile-stat-chip-val" id="profile-stat-dept" style="color: var(--success);">CSE</div>
+                <div class="profile-stat-chip-label">Department</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="k-card">
+            <div class="sec-header" style="margin-top: 0;">
+              <div class="sec-header-title">
+                <div class="sec-header-bar"></div>
+                <div class="sec-header-text">PERSONAL DETAILS</div>
+              </div>
+              <button class="back-btn" id="profile-edit-btn" onclick="app.toggleProfileEdit()" style="padding: 4px 8px;">
+                <span class="material-icons-outlined" id="profile-edit-icon" style="font-size: 16px;">edit</span>
+              </button>
+            </div>
+
+            <div id="profile-info-display">
+              <div class="info-row">
+                <span class="material-icons-outlined icon">person</span>
+                <span class="info-row-label">Full Name</span>
+                <span class="info-row-value" id="profile-val-name">Dr. Priya Sharma</span>
+              </div>
+              <div class="info-row">
+                <span class="material-icons-outlined icon">badge</span>
+                <span class="info-row-label">Teacher ID</span>
+                <span class="info-row-value" id="profile-val-id">T1001</span>
+              </div>
+              <div class="info-row">
+                <span class="material-icons-outlined icon">alternate_email</span>
+                <span class="info-row-label">Email</span>
+                <span class="info-row-value" id="profile-val-email">teacher@college.edu</span>
+              </div>
+              <div class="info-row">
+                <span class="material-icons-outlined icon">phone</span>
+                <span class="info-row-label">Phone</span>
+                <span class="info-row-value" id="profile-val-phone">9876543210</span>
+              </div>
+              <div class="info-row">
+                <span class="material-icons-outlined icon">school</span>
+                <span class="info-row-label">Department</span>
+                <span class="info-row-value" id="profile-val-dept">CSE</span>
+              </div>
+            </div>
+
+            <!-- Profile Edit Form (Hidden by default) -->
+            <form id="profile-edit-form" onsubmit="app.handleProfileSave(event)" style="display: none;">
+              <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <div class="input-wrapper">
+                  <span class="material-icons-outlined input-icon">person</span>
+                  <input type="text" id="edit-profile-name" class="form-control" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone Number</label>
+                <div class="input-wrapper">
+                  <span class="material-icons-outlined input-icon">phone</span>
+                  <input type="tel" id="edit-profile-phone" class="form-control" required>
+                </div>
+              </div>
+              <button type="submit" class="btn-grad" id="profile-save-btn">
+                <span>SAVE CHANGES</span>
+                <span class="material-icons-outlined">save</span>
+              </button>
+            </form>
+          </div>
+
+          <div class="k-card">
+            <div class="sec-header" style="margin-top: 0;">
+              <div class="sec-header-title">
+                <div class="sec-header-bar"></div>
+                <div class="sec-header-text">REGISTERED DEVICE</div>
+              </div>
+            </div>
+            <div class="info-row">
+              <span class="material-icons-outlined icon">smartphone</span>
+              <span class="info-row-label">Device Name</span>
+              <span class="info-row-value" id="profile-val-device">Chrome OS (Windows 11)</span>
+            </div>
+            <div class="gps-chip active" style="margin-top: 8px; margin-bottom: 0;">
+              <span class="material-icons-outlined" style="font-size: 14px;">verified</span>
+              <span>Registered Device Profile Verified</span>
+            </div>
+          </div>
+
+          <div class="k-card hoverable" onclick="app.switchPanel('login-history-panel')">
+            <div class="report-card-inner">
+              <span class="material-icons-outlined" style="font-size: 24px; color: var(--accent); margin-right: 8px;">history_toggle_off</span>
+              <div class="report-summary-text">
+                <div class="report-summary-title">Login History</div>
+                <div class="report-summary-subtitle">View device login activity logs</div>
+              </div>
+              <span class="material-icons-outlined" style="color: var(--text-mut);">chevron_right</span>
+            </div>
+          </div>
+
+          <button class="btn-grad btn-danger" onclick="app.handleLogout()" style="margin-top: 24px;">
+            <span>LOGOUT</span>
+            <span class="material-icons-outlined">logout</span>
+          </button>
+        </div>
+
+      </main>
+
+      <!-- MOBILE BOTTOM NAVIGATION -->
+      <nav class="bottom-nav">
+        <ul class="bottom-nav-tabs">
+          <li>
+            <a class="bottom-nav-tab active" data-target="home-panel" onclick="app.switchPanel('home-panel', this)">
+              <span class="material-icons-outlined">dashboard</span>
+              <span>Home</span>
+            </a>
+          </li>
+          <li class="teacher-only">
+            <a class="bottom-nav-tab" data-target="add-report-panel" onclick="app.switchPanel('add-report-panel', this)">
+              <span class="material-icons-outlined">add_circle_outline</span>
+              <span>Add</span>
+            </a>
+          </li>
+          <li>
+            <a class="bottom-nav-tab" data-target="reports-panel" onclick="app.switchPanel('reports-panel', this)">
+              <span class="material-icons-outlined">assignment</span>
+              <span>Reports</span>
+            </a>
+          </li>
+          <li>
+            <a class="bottom-nav-tab" data-target="search-student-panel" onclick="app.switchPanel('search-student-panel', this)">
+              <span class="material-icons-outlined">search</span>
+              <span>Search</span>
+            </a>
+          </li>
+          <li>
+            <a class="bottom-nav-tab" data-target="profile-panel" onclick="app.switchPanel('profile-panel', this)">
+              <span class="material-icons-outlined">account_circle</span>
+              <span>Profile</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+    </div>
+
+    <!-- 5. GENERAL ACCESS REQUEST DIALOG MODAL (MISMATCH DETECTED) -->
+    <div id="mismatch-modal" class="modal-overlay">
+      <div class="modal-box">
+        <div id="mismatch-icon" class="modal-icon-container warning">
+          <span class="material-icons">devices_other</span>
+        </div>
+        <h3 id="mismatch-title" class="modal-title">Device Mismatch</h3>
+        <p id="mismatch-message" class="modal-message">The current device registration does not match our records for this teacher account. Access requires admin approval.</p>
+        
+        <div class="modal-actions">
+          <button class="btn-grad" onclick="app.submitAccessRequest()">
+            <span>REQUEST ACCESS</span>
+          </button>
+          <button class="modal-btn-flat" onclick="app.closeModal('mismatch-modal')">CANCEL</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. GENERAL SUCCESS / ACTION DIALOG MODAL -->
+    <div id="success-modal" class="modal-overlay">
+      <div class="modal-box">
+        <div class="modal-icon-container success">
+          <span class="material-icons">check_circle</span>
+        </div>
+        <h3 id="success-title" class="modal-title">Success!</h3>
+        <p id="success-message" class="modal-message">The action completed successfully.</p>
+        
+        <div class="modal-actions">
+          <button class="btn-grad" onclick="app.closeModal('success-modal')">
+            <span>DONE</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Javascript Logic -->
+  <script src="app.js"></script>
+</body>
+</html>

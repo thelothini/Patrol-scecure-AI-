@@ -1,0 +1,95 @@
+name: Flutter Appium E2E Automation CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  e2e-test:
+    runs-on: macos-13 # macOS is required to run hardware accelerated Android emulators on GHA
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Java (JDK 17)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'e2e/package.json'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.10.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Flutter Dependencies
+        run: flutter pub get
+
+      - name: Build Debug APK for E2E Testing
+        run: |
+          # We build in debug mode to keep the Flutter VM Service Observatory active
+          flutter build apk --debug
+          mkdir -p app
+          cp build/app/outputs/flutter-apk/app-debug.apk app/app-release.apk
+          echo "APK generated successfully at ./app/app-release.apk"
+
+      - name: Install Appium and Drivers globally
+        run: |
+          npm install -g appium@2.1.3
+          appium driver install uiautomator2
+          appium driver install --source=npm appium-flutter-driver
+
+      - name: Install E2E Node Dependencies
+        run: |
+          cd e2e
+          npm install
+
+      - name: Run E2E Tests inside Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          force-avd-creation: false
+          emulator-options: -no-window -no-audio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            # 1. Start Appium server in background
+            appium --port 4723 --allow-insecure chromedriver_autodownload &
+            
+            # 2. Wait for Appium server to become responsive
+            echo "Waiting for Appium port 4723..."
+            while ! nc -z localhost 4723; do   
+              sleep 2
+            done
+            echo "Appium Server is active!"
+            
+            # 3. Trigger E2E Test execution
+            cd e2e
+            npm test
+            
+            # 4. Trigger AI Smart Explorer test suite
+            npm run test:ai
+
+      - name: Upload Test Execution Reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: PatrolSecure-E2E-Reports
+          path: |
+            e2e/reports/
+            e2e/mochawesome-report/
+          if-no-files-found: warn
